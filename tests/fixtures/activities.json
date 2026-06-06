@@ -1,0 +1,12 @@
+[
+  {
+    "activityId": 18446744073,
+    "activityType": { "typeKey": "running" },
+    "startTimeGMT": "2026-06-01 06:00:00",
+    "duration": 1830.5,
+    "distance": 5012.3,
+    "calories": 312,
+    "averageHR": 151,
+    "maxHR": 176
+  }
+]

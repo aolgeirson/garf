@@ -1,0 +1,21 @@
+services:
+  timescaledb:
+    image: timescale/timescaledb:2.17.2-pg16
+    container_name: garf-timescaledb
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: garf
+      POSTGRES_PASSWORD: garf
+      POSTGRES_DB: garf
+    ports:
+      - "5432:5432"
+    volumes:
+      - garf_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U garf -d garf"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  garf_pgdata:

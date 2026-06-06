@@ -1,0 +1,21 @@
+# Drop this into your shared Grafana's provisioning directory (or mount it).
+# Grafana reaches the TimescaleDB stack over the host's published port 5432.
+# On Linux, host.docker.internal requires:
+#   extra_hosts: ["host.docker.internal:host-gateway"]
+# on the Grafana service (or substitute the host's LAN IP / localhost if Grafana
+# runs on the host network).
+apiVersion: 1
+
+datasources:
+  - name: garf
+    type: postgres
+    access: proxy
+    url: host.docker.internal:5432
+    user: garf
+    jsonData:
+      database: garf
+      sslmode: disable
+      postgresVersion: 1600
+      timescaledb: true
+    secureJsonData:
+      password: garf

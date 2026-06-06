@@ -1,0 +1,8 @@
+{
+  "dailySleepDTO": {
+    "sleepTimeSeconds": 27000,
+    "sleepScores": {
+      "overall": { "value": 82 }
+    }
+  }
+}

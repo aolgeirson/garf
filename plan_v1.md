@@ -158,11 +158,19 @@ just consumes it.
 
 # Open questions (please answer)
 1. **TimescaleDB vs plain Postgres?** (I lean Timescale for intraday samples.)
+TimescaleDB, if you reccomend it
 2. **Schema: narrow `metric_samples` vs wide per-metric columns?** (I lean narrow.)
+Narrow for the sake of extensibility
 3. **DB layer: psycopg3 + SQLAlchemy Core, full ORM, or hand-rolled SQL?**
+psycopg3 and SQLAlchemy core for the sake of using industry standard tech
 4. **Migrations: Alembic vs plain SQL files?**
+I'm impartial on this one. You can chose.
 5. **Grafana↔Postgres networking: host-port vs shared external Docker network?**
+This will only ever live on a single laptop. Assume you can go over the host, as that should keep networking simple.
 6. **Sync resume: state table vs trailing re-sync window?**
+TODO: explain this one a bit more so I know the tradeoffs
 7. **Which metrics for the first slice?** (e.g. heart rate + sleep + workouts) — keeps v1 small.
+Let's keep it at heart rate, sleep, and calories for now.
 8. **Units: metric or imperial as the stored canonical?**
+Metric
 ```

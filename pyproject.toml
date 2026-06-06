@@ -7,4 +7,23 @@ requires-python = ">=3.13"
 dependencies = [
     "garminconnect>=0.3.5",
     "readchar>=4.2.2",
+    "sqlalchemy>=2.0",
+    "psycopg[binary]>=3.2",
+    "alembic>=1.13",
+    "python-dotenv>=1.0",
 ]
+
+[project.scripts]
+garf-sync = "garf.sync:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["garf"]

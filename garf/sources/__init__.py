@@ -1,0 +1,7 @@
+from garf.sources.base import Source
+from garf.sources.calories import Calories
+from garf.sources.heart_rate import HeartRate
+from garf.sources.sleep import Sleep
+from garf.sources.workouts import Workouts
+
+REGISTRY: list[Source] = [HeartRate(), Sleep(), Calories(), Workouts()]
