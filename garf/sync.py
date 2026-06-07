@@ -29,6 +29,9 @@ def run_sync(
     sleep_s: float = 1.0,
     sleep_fn: Callable[[float], None] = time.sleep,
 ) -> None:
+
+    # check or create database table
+
     for day in days:
         for src in sources:
             raw = src.fetch(client, day)

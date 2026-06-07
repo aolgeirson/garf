@@ -6,7 +6,7 @@ from sqlalchemy import pool
 from alembic import context
 
 from garf.config import Config
-from garf.models import metadata
+from garf.models import Models
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -21,7 +21,7 @@ config.set_main_option("sqlalchemy.url", Config.from_env().database_url)
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-target_metadata = metadata
+target_metadata = Models.metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:

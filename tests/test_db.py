@@ -5,7 +5,7 @@ from sqlalchemy import create_engine, select, text
 from sqlalchemy.dialects import postgresql
 
 from garf.db import build_upsert_stmt, upsert
-from garf.models import metric_samples
+from garf.models import Models
 
 
 def compiled(stmt) -> str:
@@ -42,17 +42,17 @@ DB_URL = os.environ.get("GARF_TEST_DATABASE_URL")
 
 
 @pytest.mark.skipif(not DB_URL, reason="no GARF_TEST_DATABASE_URL")
-def test_upsert_is_idempotent_round_trip():
+def test_upsert_creates_table_and_is_idempotent_round_trip():
     engine = create_engine(DB_URL)
+    # Start from a clean slate — upsert itself should re-create the table.
     with engine.begin() as conn:
         conn.execute(text("CREATE EXTENSION IF NOT EXISTS timescaledb"))
-        metric_samples.drop(conn, checkfirst=True)
-        metric_samples.create(conn)
+        Models.metric_samples.drop(conn, checkfirst=True)
 
     row = [{"ts": "2026-06-01T00:00:00+00:00", "metric": "heart_rate", "value": 58.0}]
-    upsert(engine, "metric_samples", ["metric", "ts"], None, row)
+    upsert(engine, "metric_samples", ["metric", "ts"], None, row)  # creates table
     upsert(engine, "metric_samples", ["metric", "ts"], None, row)  # second run = no dupe
 
     with engine.connect() as conn:
-        count = conn.execute(select(metric_samples)).fetchall()
+        count = conn.execute(select(Models.metric_samples)).fetchall()
     assert len(count) == 1

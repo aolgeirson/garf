@@ -3,7 +3,7 @@ from typing import Sequence
 from sqlalchemy import Engine, create_engine
 from sqlalchemy.dialects.postgresql import insert
 
-from garf.models import metadata
+from garf.models import Models
 
 
 def make_engine(url: str) -> Engine:
@@ -19,7 +19,7 @@ def build_upsert_stmt(
     """INSERT ... ON CONFLICT DO UPDATE for `rows`. When update_columns is None,
     every non-key column is refreshed; otherwise only the named columns (lets
     several sources own disjoint columns of the same daily row)."""
-    table = metadata.tables[table_name]
+    table = Models.metadata.tables[table_name]
     stmt = insert(table).values(list(rows))
     cols = update_columns or [
         c.name for c in table.columns if c.name not in conflict_keys
@@ -30,6 +30,19 @@ def build_upsert_stmt(
     )
 
 
+# Note that this method checks for tables existing
+# Non-op if table exists
+def build_hypertable(engine: Engine):
+    with engine.begin() as conn:
+        Models.metric_samples.create(conn, checkfirst=True)
+        Models.daily_summary.create(conn, checkfirst=True)
+        Models.workouts.create(conn, checkfirst=True)
+
+
+# Update or insert. Creates the target table from the SQLAlchemy schema if it
+# doesn't already exist. Caveat: this only creates the plain table — for
+# metric_samples the Timescale create_hypertable(...) call still lives in the
+# Alembic migration, so running upsert against a fresh DB skips that conversion.
 def upsert(
     engine: Engine,
     table_name: str,
@@ -39,7 +52,10 @@ def upsert(
 ) -> int:
     if not rows:
         return 0
+
+    table = Models.metadata.tables[table_name]
     stmt = build_upsert_stmt(table_name, conflict_keys, update_columns, rows)
     with engine.begin() as conn:
+        table.create(conn, checkfirst=True)
         conn.execute(stmt)
     return len(rows)
