@@ -5,11 +5,7 @@ import os
 
 
 def build_client(config: Config) -> Garmin:
-    """Return an authenticated Garmin client.
-
-    PLACEHOLDER — auth is handled by you. Wire up credentials/MFA and the
-    garth token store here; everything downstream just consumes the client.
-    """
+    """Return an authenticated Garmin client."""
     try:
         client = Garmin(
             os.getenv("GC_EMAIL"),

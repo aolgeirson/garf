@@ -1,3 +1,20 @@
+# Three source types write to three tables:
+#
+#   TimeSeriesSource  → metric_samples (ts, metric, value)
+#     Set metric, client_method, value_key. No subclassing needed.
+#     Example: HeartRate in heart_rate.py
+#
+#   DailySummarySource → daily_summary (one row per day, sparse columns)
+#     Set client_method and update_columns; implement extract(raw) → {col: val}.
+#     Also add the column to Models.daily_summary in models.py.
+#     Example: Calories in calories.py
+#
+#   WorkoutSource → workouts (one row per activity)
+#     Implement extract_activity(activity) → row dict.
+#     Example: Workouts in workouts.py
+#
+# Register every new source in sources/__init__.py REGISTRY.
+
 from abc import ABC, abstractmethod
 from datetime import date, datetime, timezone
 from typing import Any
