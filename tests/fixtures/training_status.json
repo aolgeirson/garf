@@ -1,0 +1,15 @@
+{
+  "userId": 118870200,
+  "mostRecentTrainingStatus": {
+    "userId": 118870200,
+    "latestTrainingStatusData": {
+      "3421179372": {
+        "calendarDate": "2026-06-01",
+        "trainingStatus": 7,
+        "trainingStatusFeedbackPhrase": "PRODUCTIVE_5",
+        "trainingPaused": false,
+        "primaryTrainingDevice": true
+      }
+    }
+  }
+}

@@ -43,6 +43,8 @@ class Models:
         Column("total_kilocalories", Integer),
         Column("active_kilocalories", Integer),
         Column("bmr_kilocalories", Integer),
+        Column("training_status", Integer),
+        Column("training_status_phrase", String),
     )
 
     # One row per Garmin activity.

@@ -5,6 +5,7 @@ from pathlib import Path
 from garf.sources.calories import Calories
 from garf.sources.heart_rate import HeartRate
 from garf.sources.sleep import Sleep
+from garf.sources.training_state import TrainingStatus
 from garf.sources.workouts import Workouts
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -57,9 +58,19 @@ def test_workouts_maps_activity_to_row():
     ]
 
 
+def test_training_status_extracts_code_and_phrase():
+    rows = TrainingStatus().transform(load("training_status.json"), DAY)
+    assert rows == [
+        {"day": DAY, "training_status": 7, "training_status_phrase": "PRODUCTIVE_5"}
+    ]
+
+
 def test_empty_responses_yield_no_rows_or_nulls():
     assert HeartRate().transform(None, DAY) == []
     assert Workouts().transform(None, DAY) == []
     assert Sleep().transform({}, DAY) == [
         {"day": DAY, "sleep_score": None, "sleep_duration_s": None}
+    ]
+    assert TrainingStatus().transform({}, DAY) == [
+        {"day": DAY, "training_status": None, "training_status_phrase": None}
     ]

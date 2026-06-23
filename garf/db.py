@@ -1,7 +1,9 @@
+from datetime import date, tzinfo, datetime, timezone, time, timedelta
 from typing import Sequence
 
-from sqlalchemy import Engine, create_engine
+from sqlalchemy import Engine, create_engine, select
 from sqlalchemy.dialects.postgresql import insert
+
 
 from garf.models import Models
 
@@ -37,6 +39,19 @@ def build_hypertable(engine: Engine):
         Models.metric_samples.create(conn, checkfirst=True)
         Models.daily_summary.create(conn, checkfirst=True)
         Models.workouts.create(conn, checkfirst=True)
+
+
+def read(
+    engine: Engine, table_name: str, update_columns: list[str], day: date
+) -> list[dict]:
+    table = Models.metadata.tables[table_name]
+    start = datetime.combine(day, time.min, tzinfo=timezone.utc)
+    end = start + timedelta(days=1)
+    stmt = select(*[table.c[col] for col in update_columns]).where(
+        table.c["ts"] < end, table.c["ts"] > end
+    )
+    with engine.begin() as conn:
+        return [dict(row) for row in conn.execute(stmt).mappings().all()]
 
 
 # Update or insert. Creates the target table from the SQLAlchemy schema if it
