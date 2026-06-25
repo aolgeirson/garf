@@ -50,7 +50,7 @@ class TimeSeriesSource(Source, InstantBasedSource):
 
     table = "metric_samples"
     conflict_keys = ["metric", "ts"]
-    day_key = "ts"
+    time_key = "ts"
 
     metric: str
     client_method: str
@@ -100,7 +100,7 @@ class WorkoutSource(Source, InstantBasedSource):
     """Activities → workouts. Fetched per-day via a single-date range so the
     sync loop stays uniform with the daily sources."""
 
-    day_key = "start_time"
+    time_key = "start_time"
     table = "workouts"
     conflict_keys = ["activity_id"]
 

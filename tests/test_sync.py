@@ -4,9 +4,15 @@ from datetime import date
 from garf.sync import daterange, run_sync, trailing_window
 
 
-# This should block somthing from being written as it lies that t.e data already
+# Pretends the day's row is fully populated, so the source should be skipped.
 def ALWAYS_SOME_READER(_: Source, _2: date) -> list[dict]:
     return [{"thing": "yep"}]
+
+
+# Pretends the day's row exists but one owned column is still NULL, so the
+# source should be re-fetched to fill the gap.
+def PARTIALLY_FILLED_READER(_: Source, _2: date) -> list[dict]:
+    return [{"col_a": 1, "col_b": None}]
 
 
 def test_daterange_is_inclusive():
@@ -75,3 +81,20 @@ def test_partial_fill():
         sparse=True,
     )
     assert writes == []
+
+
+def test_partial_fill_refetches_when_owned_column_is_null():
+    src = FakeSource()
+    writes = []
+
+    run_sync(
+        client=object(),
+        sources=[src],
+        days=[date(2026, 6, 1), date(2026, 6, 2)],
+        writer=lambda s, rows: writes.append((s.table, rows)),
+        sleep_s=0.0,
+        reader=PARTIALLY_FILLED_READER,
+        sparse=True,
+    )
+    assert src.fetched == [date(2026, 6, 1), date(2026, 6, 2)]
+    assert len(writes) == 2

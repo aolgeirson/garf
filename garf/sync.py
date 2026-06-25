@@ -43,13 +43,17 @@ def run_sync(
     with yaspin(run_spinner, "getting data"):
         for day in days:
             for src in sources:
-                if sparse and (reader is not None) and len(reader(src, day)) > 0:
-                    print("Here")
-                    continue
+                if sparse and reader is not None:
+                    existing = reader(src, day)
+                    # Skip only when the day's row already has every column this
+                    # source owns; a NULL means the gap still needs filling.
+                    if existing and all(
+                        v is not None for row in existing for v in row.values()
+                    ):
+                        continue
                 else:
                     raw = src.fetch(client, day)
                     writer(src, src.transform(raw, day))
-                    print("There")
                     sleep_fn(sleep_s)
 
 
