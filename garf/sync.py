@@ -8,12 +8,12 @@ from typing import Any, Callable, Iterable
 from yaspin import yaspin, Spinner
 from garf.client import build_client
 from garf.config import Config
-from garf.db import make_engine, upsert, read
+from garf.db import make_engine, upsert, read, ValidWhereKey
 from garf.sources import REGISTRY
 from garf.sources.base import Source
 
 Writer = Callable[[Source, list[dict]], None]
-Reader = Callable[[Source, date], list[dict]]
+Reader = Callable[[Source, ValidWhereKey, Any], list[dict]]
 
 
 def daterange(start: date, end: date) -> list[date]:
@@ -42,7 +42,7 @@ def run_sync(
     with yaspin(run_spinner, "getting data"):
         for day in days:
             for src in sources:
-                if len(reader(src, day)) == 0:
+                if len(reader(src, src)) == 0:
                     raw = src.fetch(client, day)
                     writer(src, src.transform(raw, day))
                     sleep_fn(sleep_s)
@@ -66,11 +66,12 @@ def main(argv: list[str] | None = None) -> None:
     def writer(src: Source, rows: list[dict]) -> None:
         upsert(engine, src.table, src.conflict_keys, src.update_columns, rows)
 
-    def reader(src: Source, day: date) -> list[dict] | None:
+    def reader(src: Source, key: ValidWhereKey, val: Any) -> list[dict]:
         if src.update_columns is not None:
-            result = read(engine, src.table, src.update_columns, date)
+            result = read(engine, src.table, src.update_columns, key, val)
             # print(result)
             return result
+        return []
 
     if args.command == "backfill":
         days = daterange(args.start, args.end)

@@ -1,5 +1,6 @@
+from enum import auto, StrEnum
 from datetime import date, tzinfo, datetime, timezone, time, timedelta
-from typing import Sequence
+from typing import Sequence, Any
 
 from sqlalchemy import Engine, create_engine, select
 from sqlalchemy.dialects.postgresql import insert
@@ -41,15 +42,34 @@ def build_hypertable(engine: Engine):
         Models.workouts.create(conn, checkfirst=True)
 
 
+class ValidWhereKey(StrEnum):
+    DAY = "day"
+    TIMESTAMP = "ts"
+    ACTIVITY_ID = "activity_id"
+
+
 def read(
-    engine: Engine, table_name: str, update_columns: list[str], day: date
+    engine: Engine,
+    table_name: str,
+    update_columns: list[str],
+    where_key_type: ValidWhereKey,
+    where_key: Any,
 ) -> list[dict]:
+    # SELECT the list of rows WHERE where_key_type IS where_key
     table = Models.metadata.tables[table_name]
-    start = datetime.combine(day, time.min, tzinfo=timezone.utc)
-    end = start + timedelta(days=1)
-    stmt = select(*[table.c[col] for col in update_columns]).where(
-        table.c["ts"] < end, table.c["ts"] > end
-    )
+    match where_key_type:
+        case ValidWhereKey.DAY:
+            start = datetime.combine(where_key, time.min, tzinfo=timezone.utc)
+            end = start + timedelta(days=1)
+            stmt = select(*[table.c[col] for col in update_columns]).where(
+                table.c["ts"] < end, table.c["ts"] >= start
+            )
+        case ValidWhereKey.ACTIVITY_ID | ValidWhereKey.TIMESTAMP:
+            # QUESTION: I'm not 100% sure if I should require strict matching on timestamps or allow for a window.
+            # Because loss of data is worse than extra checks, I'll use strict matching.
+            stmt = select(*[table.c[col] for col in update_columns]).where(
+                table.c.where_key_type == where_key
+            )
     with engine.begin() as conn:
         return [dict(row) for row in conn.execute(stmt).mappings().all()]
 

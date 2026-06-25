@@ -6,6 +6,9 @@ dist/
 wheels/
 *.egg-info
 
+# msc
+lastrun
+scratch
 # Virtual environments
 .venv
 
