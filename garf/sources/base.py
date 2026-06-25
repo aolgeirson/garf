@@ -30,20 +30,27 @@ class Source(ABC):
     update_columns: list[str] | None = None
 
     @abstractmethod
-    def fetch(self, client: Any, day: date) -> Any:
-        ...
+    def fetch(self, client: Any, day: date) -> Any: ...
 
     @abstractmethod
-    def transform(self, raw: Any, day: date) -> list[dict]:
-        ...
+    def transform(self, raw: Any, day: date) -> list[dict]: ...
 
 
-class TimeSeriesSource(Source):
+class DayBasedSource(ABC):
+    day_key: str
+
+
+class InstantBasedSource(ABC):
+    time_key: str
+
+
+class TimeSeriesSource(Source, InstantBasedSource):
     """Intraday samples → metric_samples. Garmin returns arrays of
     [epoch_millis, value]; we unnest them into (ts, metric, value) rows."""
 
     table = "metric_samples"
     conflict_keys = ["metric", "ts"]
+    day_key = "ts"
 
     metric: str
     client_method: str
@@ -68,13 +75,14 @@ class TimeSeriesSource(Source):
         return rows
 
 
-class DailySummarySource(Source):
+class DailySummarySource(Source, DayBasedSource):
     """Daily scalars → daily_summary. Each source owns a subset of columns and
     upserts only those for the day."""
 
     table = "daily_summary"
     conflict_keys = ["day"]
 
+    day_key = "day"
     client_method: str
 
     def fetch(self, client: Any, day: date) -> Any:
@@ -88,10 +96,11 @@ class DailySummarySource(Source):
         return [{"day": day, **self.extract(raw or {})}]
 
 
-class WorkoutSource(Source):
+class WorkoutSource(Source, InstantBasedSource):
     """Activities → workouts. Fetched per-day via a single-date range so the
     sync loop stays uniform with the daily sources."""
 
+    day_key = "start_time"
     table = "workouts"
     conflict_keys = ["activity_id"]
 

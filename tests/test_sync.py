@@ -72,5 +72,6 @@ def test_partial_fill():
         writer=lambda s, rows: writes.append((s.table, rows)),
         sleep_s=0.0,
         reader=ALWAYS_SOME_READER,
+        sparse=True,
     )
     assert writes == []

@@ -1,7 +1,7 @@
 from ast import Call
 import argparse
 import time
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 from typing import Any, Callable, Iterable
 
 
@@ -13,7 +13,7 @@ from garf.sources import REGISTRY
 from garf.sources.base import Source
 
 Writer = Callable[[Source, list[dict]], None]
-Reader = Callable[[Source, ValidWhereKey, Any], list[dict]]
+Reader = Callable[[Source, date | datetime], list[dict]]
 
 
 def daterange(start: date, end: date) -> list[date]:
@@ -30,9 +30,10 @@ def run_sync(
     sources: Iterable[Source],
     days: list[date],
     writer: Writer,
-    reader: Reader,
+    reader: Reader | None = None,
     sleep_s: float = 1.0,
     sleep_fn: Callable[[float], None] = time.sleep,
+    sparse: bool = False,
 ) -> None:
 
     # check or create database table
@@ -42,12 +43,14 @@ def run_sync(
     with yaspin(run_spinner, "getting data"):
         for day in days:
             for src in sources:
-                if len(reader(src, src)) == 0:
+                if sparse and (reader is not None) and len(reader(src, day)) > 0:
+                    print("Here")
+                    continue
+                else:
                     raw = src.fetch(client, day)
                     writer(src, src.transform(raw, day))
+                    print("There")
                     sleep_fn(sleep_s)
-                else:
-                    print("here")
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -66,9 +69,9 @@ def main(argv: list[str] | None = None) -> None:
     def writer(src: Source, rows: list[dict]) -> None:
         upsert(engine, src.table, src.conflict_keys, src.update_columns, rows)
 
-    def reader(src: Source, key: ValidWhereKey, val: Any) -> list[dict]:
+    def reader(src: Source, day_or_time: date | datetime) -> list[dict]:
         if src.update_columns is not None:
-            result = read(engine, src.table, src.update_columns, key, val)
+            result = read(engine, src.table, src.update_columns, src, day_or_time)
             # print(result)
             return result
         return []
@@ -78,7 +81,7 @@ def main(argv: list[str] | None = None) -> None:
     else:
         days = trailing_window(date.today(), config.trailing_days)
 
-    run_sync(client, REGISTRY, days, writer, reader)
+    run_sync(client, REGISTRY, days, writer, reader, sparse=True)
 
 
 if __name__ == "__main__":
