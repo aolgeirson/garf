@@ -43,14 +43,15 @@ def run_sync(
     with yaspin(run_spinner, "getting data"):
         for day in days:
             for src in sources:
-                if sparse and reader is not None:
-                    existing = reader(src, day)
-                    # Skip only when the day's row already has every column this
-                    # source owns; a NULL means the gap still needs filling.
-                    if existing and all(
-                        v is not None for row in existing for v in row.values()
-                    ):
-                        continue
+                if (
+                    sparse
+                    and reader is not None
+                    and reader(src, day)
+                    and all(
+                        v is not None for row in reader(src, day) for v in row.values()
+                    )
+                ):
+                    continue
                 else:
                     raw = src.fetch(client, day)
                     writer(src, src.transform(raw, day))
@@ -64,6 +65,8 @@ def main(argv: list[str] | None = None) -> None:
     bf = sub.add_parser("backfill", help="pull an explicit inclusive date range")
     bf.add_argument("start", type=date.fromisoformat)
     bf.add_argument("end", type=date.fromisoformat)
+    bf.add_argument("-s", "--sparse", help="Don't pull data already in the database")
+
     args = parser.parse_args(argv)
 
     config = Config.from_env()
@@ -85,7 +88,7 @@ def main(argv: list[str] | None = None) -> None:
     else:
         days = trailing_window(date.today(), config.trailing_days)
 
-    run_sync(client, REGISTRY, days, writer, reader, sparse=True)
+    run_sync(client, REGISTRY, days, writer, reader, sparse=args.sparse)
 
 
 if __name__ == "__main__":

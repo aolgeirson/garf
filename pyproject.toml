@@ -12,6 +12,7 @@ dependencies = [
     "alembic>=1.13",
     "python-dotenv>=1.0",
     "yaspin>=3.4.0",
+    "coverage>=7.14.3",
 ]
 
 [project.scripts]
